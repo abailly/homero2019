@@ -1,5 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 import           Control.Applicative
+import           Control.Concurrent  (threadDelay)
 import           Control.Monad       (void, when)
 import           Data.Char
 import qualified Data.List           as List
@@ -29,7 +30,9 @@ makeTweets doTweet numTweets content = do
       end = start + length sentence
       tweet = unwords sentence <> " #homero2019"
   putStrLn tweet
-  when doTweet $ void $ basicTweet tweet ".cred.toml"
+  when doTweet $ do
+    void $ basicTweet tweet ".cred.toml"
+    threadDelay (30 * 1000000)
   writeBreak end
   makeTweets doTweet (numTweets - 1) content
 
