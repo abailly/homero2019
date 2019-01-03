@@ -1,14 +1,13 @@
-#!/usr/bin/env stack
--- stack runhaskell --resolver lts-12.5 --
-
 {-# LANGUAGE LambdaCase #-}
 import           Control.Applicative
+import           Control.Monad       (void, when)
 import           Data.Char
 import qualified Data.List           as List
 import           Data.Monoid
 import           System.Directory
 import           System.Environment
 import           System.IO
+import           Web.Tweet
 
 -- | Break the text in standard input into tweet-sized chunks
 --
@@ -18,24 +17,29 @@ import           System.IO
 -- is updated accordingly
 main :: IO ()
 main = do
-  numTweets <- getNumTweets
-  getContents >>= makeTweets numTweets
+  (numTweets, doTweet) <- getOptions
+  getContents >>= makeTweets doTweet numTweets
 
-makeTweets :: Int -> String -> IO ()
-makeTweets 0 _ = pure ()
-makeTweets numTweets content = do
+makeTweets :: Bool -> Int -> String -> IO ()
+makeTweets _ 0 _ = pure ()
+makeTweets doTweet numTweets content = do
   start <- readBreak <|> pure 0
   let ws = List.inits . drop start . words . filter (not . isDigit) $ content
       sentence = lastWithPunctuation $ takeWhile ((< 260) . length . unwords) ws
       end = start + length sentence
-  putStrLn $ unwords sentence <> " #homero2019"
+      tweet = unwords sentence <> " #homero2019"
+  putStrLn tweet
+  when doTweet $ void $ basicTweet tweet ".cred.toml"
   writeBreak end
-  makeTweets (numTweets - 1) content
+  makeTweets doTweet (numTweets - 1) content
 
-getNumTweets :: IO Int
-getNumTweets = getArgs >>= \case
-  [] -> pure 1
-  (n:_) -> pure $ read n
+getOptions :: IO (Int, Bool)
+getOptions = getArgs >>= \case
+  [] -> pure (1, False)
+  [n, "y" ] -> pure (read n, True)
+  [n, "Y" ] -> pure (read n, True)
+  [n, "yes" ] -> pure (read n, True)
+  (n:_) -> pure (read n, False)
 
 lastWithPunctuation :: [[ String ]] -> [String]
 lastWithPunctuation ws = head $ dropWhile (\ s -> not $ isPunctuation $ head $ head $ reverse <$> reverse s) sw

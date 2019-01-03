@@ -1,0 +1,7 @@
+resolver: lts-13.1
+packages:
+- '.'
+extra-deps:
+- tweet-hs-1.0.1.43
+- htoml-megaparsec-2.1.0.3
+- composition-prelude-2.0.2.1
